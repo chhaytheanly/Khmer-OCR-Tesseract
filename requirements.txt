@@ -1,0 +1,30 @@
+# Core OCR requirements
+pytesseract>=0.3.10
+Pillow>=9.0.0
+opencv-python>=4.5.0
+
+# Image preprocessing
+numpy>=1.21.0
+scikit-image>=0.19.0
+imutils>=0.5.4
+
+# PDF processing
+PyPDF2>=2.0.0
+pdf2image>=1.16.0
+
+# # Text processing (REPLACED pykhmertools with available alternatives)
+# khmer-romanization>=0.2.0  # Alternative for Khmer text processing
+# python-levenshtein>=0.20.0
+# regex>=2022.0.0  # Better Unicode support for Khmer
+
+# # Audio/TTS requirements (for your complete project)
+# torch>=1.9.0
+# torchaudio>=0.9.0
+# librosa>=0.9.0
+# soundfile>=0.10.0
+# TTS>=0.20.0  # Coqui TTS
+
+# Web framework for deployment
+# fastapi>=0.68.0
+# uvicorn>=0.15.0
+# python-multipart>=0.0.5
