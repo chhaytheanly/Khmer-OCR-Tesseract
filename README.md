@@ -72,4 +72,9 @@ Feel free to open an issue or submit a PR with improvements to preprocessing, mo
 
 ## Authorize
 
-All rights reserve! -------> Chhaythean LY
+All rights reserve!
+
+  1. LY Chhaythean
+  2. SOEUK Bondol
+  3. SOPHON Rachana
+  4. NEANG Vanna
