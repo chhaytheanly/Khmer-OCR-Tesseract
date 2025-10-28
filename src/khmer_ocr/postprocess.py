@@ -4,7 +4,7 @@ Handles Unicode normalization, spacing correction, and error correction
 """
 import unicodedata
 import re
-
+from error import common_error
 
 def normalize_khmer_unicode(text):
     """Normalize Khmer Unicode characters"""
@@ -52,16 +52,7 @@ def expand_khmer_abbreviations(text):
 
 def spell_check_khmer(text, custom_dict=None):
     """Correct common spelling errors in Khmer text"""
-    common_errors = {
-        'មហាុ': 'មហា',
-        'ប្រទេសជ': 'ប្រទេស',
-        'កមពុជ': 'កម្ពុជា',
-        'បរជាតិយ': 'ប្រជាជាតិ',
-        'សកលវិទ្យាលយ': 'សកលវិទ្យាល័យ',
-        'អង្គរវត្ត្': 'អង្គរវត្ត',
-        'បាំបាំ': 'ប៉ាប៉ា',
-    }
-    for error, correction in common_errors.items():
+    for error, correction in common_error.items():
         text = text.replace(error, correction)
     return text
 
