@@ -126,7 +126,7 @@ def remove_noise(image):
         IMAGE_PROCESSING['bilateral_filter_sigma_color'],
         IMAGE_PROCESSING['bilateral_filter_sigma_space']
     )
-    kernel = np.ones((1, 1), np.uint8)
+    kernel = np.ones((2, 2), np.uint8)
     cleaned = cv2.morphologyEx(denoised, cv2.MORPH_CLOSE, kernel)
     cleaned = cv2.morphologyEx(cleaned, cv2.MORPH_OPEN, kernel)
     return cleaned
@@ -151,12 +151,6 @@ def preprocess_pipeline(image_path, enhance=True):
     image = advanced_rotation_correction(image)
     print(GREEN + "Rotation correction completed." + ENDC)
 
-    # Text region segmentation (imported from segmentation module)
-    from .segmentation import segment_text_regions
-    print(PINK + "Text region segmentation..." + ENDC)
-    text_masks, gray_image = segment_text_regions(image)
-    print(GREEN + f"Found {len(text_masks)} text region types" + ENDC)
-
     # Resolution enhancement
     if enhance:
         print(PINK + "Resolution..." + ENDC)
@@ -167,5 +161,11 @@ def preprocess_pipeline(image_path, enhance=True):
     print(PINK + "Removing noise..." + ENDC)
     image = remove_noise(image)
     print(GREEN + "Noise removed." + ENDC)
+
+    # Text region segmentation (imported from segmentation module)
+    from .segmentation import segment_text_regions
+    print(PINK + "Text region segmentation..." + ENDC)
+    text_masks, gray_image = segment_text_regions(image)
+    print(GREEN + f"Found {len(text_masks)} text region types" + ENDC)
 
     return image, text_masks

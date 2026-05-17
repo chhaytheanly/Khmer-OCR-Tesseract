@@ -4,7 +4,6 @@ Handles Unicode normalization, spacing correction, and error correction
 """
 import unicodedata
 import re
-from error import common_error
 
 def normalize_khmer_unicode(text):
     """Normalize Khmer Unicode characters"""
@@ -120,7 +119,7 @@ def spell_check_khmer(text, custom_dict=None):
     return text
 
 
-def postprocess_pipeline(text):
+def postprocess_pipeline(text, preserve_lines=False):
     """Complete post-processing pipeline for Khmer text"""
     # Apply normalization steps
     text = normalize_khmer_unicode(text)
@@ -128,9 +127,14 @@ def postprocess_pipeline(text):
     text = numbers_to_khmer(text)
     text = expand_khmer_abbreviations(text)
     text = spell_check_khmer(text)
-    
+
+    if preserve_lines:
+        lines = [re.sub(r'\s+', ' ', line).strip() for line in text.splitlines()]
+        lines = [line for line in lines if line]
+        return "\n".join(lines)
+
     # Additional cleaning
     text = re.sub(r'\s+', ' ', text)  # Normalize whitespace
     text = text.strip()
-    
+
     return text

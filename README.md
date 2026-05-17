@@ -27,22 +27,64 @@ uv sync
 
 3. Install Tesseract OCR and the Khmer traineddata (platform-specific instructions below).
   This project requires [Tesseract OCR](https://github.com/tesseract-ocr/tesseract)
-  and the **Khmer language model** (`khm.traineddata`)
-  Run this script for download data 
+  and the **Khmer language model** (`khm.traineddata`).
+
+  Download Khmer data:
 
   ```bash
   uv run download_data.py
   ```
-  Download tesseract The actual OCR engine
-  **See wiki: https://github.com/UB-Mannheim/tesseract/wiki**
-  for Mac:
+
+  Install Tesseract (engine):
+  - macOS:
   ```bash
   brew install tesseract
+  ```
+  - Linux (Debian/Ubuntu):
+  ```bash
+  sudo apt update
+  sudo apt install tesseract-ocr
+  ```
+  - Windows:
+  Use the installer from https://github.com/UB-Mannheim/tesseract/wiki
+
+  Optional: set the Tesseract binary path if it is not in PATH:
+  ```bash
+  export TESSERACT_CMD="/full/path/to/tesseract"
+  ```
+
+## Optional: Improved line detection (Kraken)
+
+For better line segmentation on scanned documents, you can enable Kraken as the
+line detection backend. The code will auto-detect Kraken if installed.
+
+Install Kraken:
+
+```bash
+pip install kraken
 ```
-  For Linux
+
+Force Kraken or OpenCV:
+
+```bash
+export LINE_DETECTION_BACKEND="kraken"  # or "opencv" / "auto"
 ```
-sudo apt update
-sudo apt install tesseract-ocr
+
+## Optional: Layout detection (LayoutParser)
+
+For better handling of multi-column layouts and tables, enable LayoutParser.
+This splits the page into regions before line detection.
+
+Install LayoutParser (Detectron2 backend required):
+
+```bash
+pip install layoutparser
+```
+
+Enable LayoutParser (auto by default when installed):
+
+```bash
+export USE_LAYOUTPARSER="auto"  # or "true" / "false"
 ```
 
 4. Open the notebook in Jupyter Lab / Notebook and run the cells in order:
