@@ -53,6 +53,40 @@ uv sync
   export TESSERACT_CMD="/full/path/to/tesseract"
   ```
 
+## Optional: Improved line detection (Kraken)
+
+For better line segmentation on scanned documents, you can enable Kraken as the
+line detection backend. The code will auto-detect Kraken if installed.
+
+Install Kraken:
+
+```bash
+pip install kraken
+```
+
+Force Kraken or OpenCV:
+
+```bash
+export LINE_DETECTION_BACKEND="kraken"  # or "opencv" / "auto"
+```
+
+## Optional: Layout detection (LayoutParser)
+
+For better handling of multi-column layouts and tables, enable LayoutParser.
+This splits the page into regions before line detection.
+
+Install LayoutParser (Detectron2 backend required):
+
+```bash
+pip install layoutparser
+```
+
+Enable LayoutParser (auto by default when installed):
+
+```bash
+export USE_LAYOUTPARSER="auto"  # or "true" / "false"
+```
+
 4. Open the notebook in Jupyter Lab / Notebook and run the cells in order:
 
 ```bash

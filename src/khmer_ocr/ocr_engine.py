@@ -7,7 +7,7 @@ import numpy as np
 import pytesseract
 
 from .config import PINK, GREEN, BLUE, YELLOW, ENDC, OCR_CONFIGS, TESSERACT_CMD, IMAGE_PROCESSING
-from .segmentation import detect_text_lines
+from .line_detection import detect_lines
 
 if TESSERACT_CMD:
     pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
@@ -112,7 +112,7 @@ def line_ocr(image):
     else:
         gray = image
 
-    lines = detect_text_lines(gray)
+    lines = detect_lines(gray)
     primary_configs = OCR_CONFIGS.get('line_primary', [])
     fallback_configs = OCR_CONFIGS.get('line_fallback', [])
     confidence_threshold = IMAGE_PROCESSING.get('line_confidence_threshold', 35)

@@ -15,6 +15,13 @@ BLUE = '\033[94m'
 DEFAULT_OUTPUT_DIR = Path("output")
 DEFAULT_TESSDATA_DIR = Path.home() / "tessdata"
 TESSERACT_CMD = os.environ.get("TESSERACT_CMD", "").strip()
+LINE_DETECTION_BACKEND = os.environ.get("LINE_DETECTION_BACKEND", "auto").strip().lower()
+USE_LAYOUTPARSER = os.environ.get("USE_LAYOUTPARSER", "auto").strip().lower()
+LAYOUTPARSER_SCORE_THRESHOLD = float(os.environ.get("LAYOUTPARSER_SCORE_THRESHOLD", "0.5"))
+LAYOUTPARSER_MODEL = os.environ.get(
+    "LAYOUTPARSER_MODEL",
+    "lp://PubLayNet/faster_rcnn_R_50_FPN_3x/config"
+).strip()
 
 # OCR Configuration presets
 OCR_CONFIGS = {
