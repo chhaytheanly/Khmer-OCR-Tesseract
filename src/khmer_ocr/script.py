@@ -47,7 +47,8 @@ def process_document(image_path, output_dir=None):
 
         # Post-processing
         print(YELLOW + "Post-processing..." + ENDC)
-        cleaned_text = postprocess_pipeline(ocr_result['text'])
+        preserve_lines = ocr_result.get('result_type') == 'line'
+        cleaned_text = postprocess_pipeline(ocr_result['text'], preserve_lines=preserve_lines)
 
         # Save detailed results
         results = {
@@ -55,7 +56,8 @@ def process_document(image_path, output_dir=None):
             'cleaned_text': cleaned_text,
             'preprocessed_image': str(preprocessed_path),
             'confidence': ocr_result['confidence'],
-            'region_results': ocr_result.get('region_results', []),
+            'result_type': ocr_result.get('result_type', 'unknown'),
+            'line_results': ocr_result.get('line_results', []),
             'whole_image_results': ocr_result.get('whole_image_results', [])
         }
 
@@ -65,11 +67,17 @@ def process_document(image_path, output_dir=None):
 
         # Save region analysis
         with open(output_dir / "region_analysis.txt", "w", encoding="utf-8") as f:
-            for region in results.get('region_results', []):
-                f.write(f"Region: {region['region']}\n")
-                f.write(f"Confidence: {region['confidence']:.2f}\n")
-                f.write(f"Text: {region['text']}\n")
-                f.write("-" * 50 + "\n")
+            f.write(f"Result Type: {results.get('result_type', 'unknown')}\n")
+            f.write("-" * 50 + "\n")
+
+            if results.get('line_results'):
+                f.write("Line Results:\n")
+                for line_result in results.get('line_results', []):
+                    x, y, w, h = line_result['line']
+                    f.write(f"Line: x={x}, y={y}, w={w}, h={h}\n")
+                    f.write(f"Confidence: {line_result['confidence']:.2f}\n")
+                    f.write(f"Text: {line_result['text']}\n")
+                    f.write("-" * 50 + "\n")
 
         print(GREEN + " Processing Completed " + ENDC)
         print(GREEN + f"Extracted {len(cleaned_text)} characters with confidence {results['confidence']:.2f}" + ENDC)

@@ -6,7 +6,11 @@ import cv2
 import numpy as np
 import pytesseract
 
-from .config import PINK, GREEN, BLUE, YELLOW, ENDC, OCR_CONFIGS
+from .config import PINK, GREEN, BLUE, YELLOW, ENDC, OCR_CONFIGS, TESSERACT_CMD, IMAGE_PROCESSING
+from .segmentation import detect_text_lines
+
+if TESSERACT_CMD:
+    pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
 
 
 def safe_bitwise(image, mask):
@@ -99,17 +103,119 @@ def region_specific_ocr(image, text_masks):
     }
 
 
+def line_ocr(image):
+    """Perform OCR on detected line boxes with confidence fallback."""
+    print(PINK + "Performing line OCR..." + ENDC)
+
+    if len(image.shape) == 3:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    else:
+        gray = image
+
+    lines = detect_text_lines(gray)
+    primary_configs = OCR_CONFIGS.get('line_primary', [])
+    fallback_configs = OCR_CONFIGS.get('line_fallback', [])
+    confidence_threshold = IMAGE_PROCESSING.get('line_confidence_threshold', 35)
+
+    all_results = []
+    for line in lines:
+        x, y, w, h = line
+        roi = gray[y:y + h, x:x + w]
+        if roi.size == 0:
+            continue
+
+        line_results = []
+        for config in primary_configs:
+            try:
+                text = pytesseract.image_to_string(roi, config=config)
+                confidence_data = pytesseract.image_to_data(
+                    roi, config=config, output_type=pytesseract.Output.DICT
+                )
+
+                confs = []
+                for c in confidence_data.get('conf', []):
+                    try:
+                        cv = int(float(c))
+                        if cv > 0:
+                            confs.append(cv)
+                    except Exception:
+                        continue
+
+                avg_confidence = float(np.mean(confs)) if confs else 0
+
+                if text.strip():
+                    line_results.append({
+                        'config': config,
+                        'text': text.strip(),
+                        'confidence': avg_confidence
+                    })
+            except Exception as e:
+                print(f"Line OCR error with config {config}: {e}")
+                continue
+
+        best_line = max(line_results, key=lambda x: x['confidence']) if line_results else None
+
+        if best_line and best_line['confidence'] < confidence_threshold:
+            for config in fallback_configs:
+                try:
+                    text = pytesseract.image_to_string(roi, config=config)
+                    confidence_data = pytesseract.image_to_data(
+                        roi, config=config, output_type=pytesseract.Output.DICT
+                    )
+
+                    confs = []
+                    for c in confidence_data.get('conf', []):
+                        try:
+                            cv = int(float(c))
+                            if cv > 0:
+                                confs.append(cv)
+                        except Exception:
+                            continue
+
+                    avg_confidence = float(np.mean(confs)) if confs else 0
+
+                    if text.strip():
+                        line_results.append({
+                            'config': config,
+                            'text': text.strip(),
+                            'confidence': avg_confidence
+                        })
+                except Exception as e:
+                    print(f"Line OCR fallback error with config {config}: {e}")
+                    continue
+
+            best_line = max(line_results, key=lambda x: x['confidence']) if line_results else best_line
+
+        if best_line:
+            all_results.append({
+                'line': line,
+                'text': best_line['text'],
+                'confidence': best_line['confidence']
+            })
+
+    combined_text = '\n'.join([r['text'] for r in all_results if r['text']])
+    overall_confidence = np.mean([r['confidence'] for r in all_results]) if all_results else 0
+
+    print(GREEN + f"Combined {len(all_results)} lines, confidence: {overall_confidence:.2f}" + ENDC)
+
+    return {
+        'combined_text': combined_text,
+        'line_results': all_results,
+        'confidence': overall_confidence
+    }
+
+
 def multi_pass_ocr(image, text_masks):
-    """Multi-pass OCR strategy combining region-based and whole-image OCR"""
-    print(YELLOW + "Starting multi-pass OCR..." + ENDC)
+    """Accuracy-first OCR: line OCR by default with whole-image fallback."""
+    print(YELLOW + "Starting accuracy-first OCR..." + ENDC)
 
-    # Pass 1: Region-specific OCR
-    region_results = region_specific_ocr(image, text_masks)
-    region_list = region_results.get('region_results', []) if isinstance(region_results, dict) else region_results
-    region_combined_text = region_results.get('combined_text', '') if isinstance(region_results, dict) else ' '.join([r.get('text', '') for r in region_list])
-    region_confidence = region_results.get('confidence', 0) if isinstance(region_results, dict) else (np.mean([r.get('confidence', 0) for r in region_list]) if region_list else 0)
+    # Pass 1: Line OCR (primary)
+    line_results = line_ocr(image)
+    line_list = line_results.get('line_results', []) if isinstance(line_results, dict) else line_results
+    line_combined_text = line_results.get('combined_text', '') if isinstance(line_results, dict) else '\n'.join([r.get('text', '') for r in line_list])
+    line_confidence = line_results.get('confidence', 0) if isinstance(line_results, dict) else (np.mean([r.get('confidence', 0) for r in line_list]) if line_list else 0)
 
-    # Pass 2: Whole image OCR
+    # Pass 2: Whole image OCR (fallback)
     whole_image_configs = OCR_CONFIGS['whole_image']
 
     whole_image_results = []
@@ -146,12 +252,10 @@ def multi_pass_ocr(image, text_masks):
             print(f"Whole image OCR error: {e}")
             continue
 
-    # Select best whole image result
     best_whole = max(whole_image_results, key=lambda x: x['confidence']) if whole_image_results else {'text': '', 'confidence': 0}
 
-    # Combine results - use highest confidence
-    all_texts = [region_combined_text, best_whole['text']]
-    all_confidences = [region_confidence, best_whole['confidence']]
+    all_texts = [line_combined_text, best_whole['text']]
+    all_confidences = [line_confidence, best_whole['confidence']]
 
     if not any(all_confidences):
         final_text = ''
@@ -161,13 +265,14 @@ def multi_pass_ocr(image, text_masks):
         best_idx = int(np.argmax(all_confidences))
         final_text = all_texts[best_idx]
         final_confidence = float(all_confidences[best_idx])
-        result_type = "region_based" if best_idx == 0 else "whole_image"
+        result_type = "line" if best_idx == 0 else "whole_image"
 
     print(GREEN + f"Selected {result_type} result with confidence: {final_confidence:.2f}" + ENDC)
 
     return {
         'text': final_text,
         'confidence': final_confidence,
-        'region_results': region_list,
+        'result_type': result_type,
+        'line_results': line_list,
         'whole_image_results': whole_image_results
     }

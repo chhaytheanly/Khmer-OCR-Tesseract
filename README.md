@@ -27,23 +27,31 @@ uv sync
 
 3. Install Tesseract OCR and the Khmer traineddata (platform-specific instructions below).
   This project requires [Tesseract OCR](https://github.com/tesseract-ocr/tesseract)
-  and the **Khmer language model** (`khm.traineddata`)
-  Run this script for download data 
+  and the **Khmer language model** (`khm.traineddata`).
+
+  Download Khmer data:
 
   ```bash
   uv run download_data.py
   ```
-  Download tesseract The actual OCR engine
-  **See wiki: https://github.com/UB-Mannheim/tesseract/wiki**
-  for Mac:
+
+  Install Tesseract (engine):
+  - macOS:
   ```bash
   brew install tesseract
-```
-  For Linux
-```
-sudo apt update
-sudo apt install tesseract-ocr
-```
+  ```
+  - Linux (Debian/Ubuntu):
+  ```bash
+  sudo apt update
+  sudo apt install tesseract-ocr
+  ```
+  - Windows:
+  Use the installer from https://github.com/UB-Mannheim/tesseract/wiki
+
+  Optional: set the Tesseract binary path if it is not in PATH:
+  ```bash
+  export TESSERACT_CMD="/full/path/to/tesseract"
+  ```
 
 4. Open the notebook in Jupyter Lab / Notebook and run the cells in order:
 
